@@ -1,19 +1,34 @@
 import { useState, useEffect } from "react";
-import {Alert,StyleSheet,Text,TextInput,TouchableOpacity,View,} from "react-native";
+import { 
+  Alert, 
+  StyleSheet, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  View, 
+  Image,
+  StatusBar,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView 
+} from "react-native";
 import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {signInWithEmailAndPassword,sendPasswordResetEmail,} from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../src/configurations/firebaseConfig";
 import { useTheme } from "../src/context/ContextTheme";
 import { useTranslation } from "react-i18next";
 import ThemeToggleButton from "../src/components/ContextThemeButton";
 
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
@@ -37,6 +52,8 @@ export default function Login() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -57,10 +74,11 @@ export default function Login() {
       } else {
         Alert.alert("Erro", error.message);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Recuperar senha
   const forgotPassword = async () => {
     if (!email) {
       Alert.alert(t("attention"), t("enterEmailToRecover"));
@@ -75,160 +93,349 @@ export default function Login() {
     }
   };
 
-  // Mudar idioma
   const mudarIdioma = (lang: string) => {
     i18n.changeLanguage(lang);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.themeButtonWrapper}>
-        <ThemeToggleButton />
-      </View>
-
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>{t("login")}</Text>
-
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.input, color: colors.text },
-          ]}
-          placeholder={t("email")}
-          placeholderTextColor={colors.placeHolderTextColor}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.input, color: colors.text },
-          ]}
-          placeholder={t("password")}
-          placeholderTextColor={colors.placeHolderTextColor}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: colors.backgroundButton },
-          ]}
-          onPress={handleLoginUser}
-        >
-          <Text style={styles.buttonText}>{t("login")}</Text>
-        </TouchableOpacity>
-
-        {/* Botões de Idioma */}
-        <View style={styles.languageContainer}>
-          <TouchableOpacity
-            style={styles.languageButton}
-            onPress={() => mudarIdioma("pt")}
-          >
-            <Text style={styles.languageText}>PT</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.languageButton}
-            onPress={() => mudarIdioma("en")}
-          >
-            <Text style={styles.languageText}>EN</Text>
-          </TouchableOpacity>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <StatusBar 
+        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} 
+        backgroundColor={colors.background} 
+      />
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header com botão de tema */}
+        <View style={styles.header}>
+          <View style={styles.themeButtonWrapper}>
+            <ThemeToggleButton />
+          </View>
         </View>
 
-        <Link
-          href="ScreemRegister"
-          style={[styles.buttonLinkText, { color: colors.text }]}
-        >
-          {t("signup")}
-        </Link>
+        {/* Conteúdo principal */}
+        <View style={styles.content}>
+          {/* Logo */}
+          <View style={[styles.logoContainer, { 
+            shadowColor: colors.shadow,
+            backgroundColor: colors.cardBackground 
+          }]}>
+            <Image
+              source={require('../assets/logo-planify.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
 
-        <Text
-          style={[styles.forgotPassword, { color: colors.text }]}
-          onPress={forgotPassword}
-        >
-          {t("forgotPassword")}
-        </Text>
-      </View>
-    </View>
+          {/* Título */}
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t("login")}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Bem-vindo de volta ao Planify
+          </Text>
+
+          {/* Formulário */}
+          <View style={styles.form}>
+            {/* Campo Email */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                {t("email")}
+              </Text>
+              <View style={[
+                styles.inputWrapper,
+                { 
+                  backgroundColor: colors.input,
+                  borderColor: colors.inputBorder
+                }
+              ]}>
+                <Text style={[styles.inputIcon, { color: colors.textMuted }]}>
+                  ✉
+                </Text>
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder={t("email")}
+                  placeholderTextColor={colors.placeHolderTextColor}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+              </View>
+            </View>
+
+            {/* Campo Senha */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                {t("password")}
+              </Text>
+              <View style={[
+                styles.inputWrapper,
+                { 
+                  backgroundColor: colors.input,
+                  borderColor: colors.inputBorder
+                }
+              ]}>
+                <Text style={[styles.inputIcon, { color: colors.textMuted }]}>
+                  🔒
+                </Text>
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder={t("password")}
+                  placeholderTextColor={colors.placeHolderTextColor}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoComplete="password"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.passwordToggle}
+                >
+                  <Text style={{ color: colors.textMuted, fontSize: 18 }}>
+                    {showPassword ? "🙈" : "👁"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Botão de Login */}
+            <TouchableOpacity
+              style={[
+                styles.loginButton,
+                { 
+                  backgroundColor: colors.backgroundButton,
+                  shadowColor: colors.shadow 
+                },
+                isLoading && styles.buttonDisabled
+              ]}
+              onPress={handleLoginUser}
+              disabled={isLoading}
+            >
+              <Text style={[styles.loginButtonText, { color: colors.buttonText }]}>
+                {isLoading ? "Entrando..." : t("login")}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Esqueci a senha */}
+            <TouchableOpacity
+              style={styles.forgotPasswordContainer}
+              onPress={forgotPassword}
+            >
+              <Text style={[styles.forgotPassword, { color: colors.primary }]}>
+                {t("forgotPassword")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Seletor de idioma */}
+          <View style={styles.languageSection}>
+            <Text style={[styles.languageTitle, { color: colors.textSecondary }]}>
+              Idioma
+            </Text>
+            <View style={styles.languageContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.languageButton,
+                  { 
+                    backgroundColor: colors.buttonSecondary,
+                    borderColor: colors.border
+                  }
+                ]}
+                onPress={() => mudarIdioma("pt")}
+              >
+                <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
+                  🇧🇷 PT
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.languageButton,
+                  { 
+                    backgroundColor: colors.buttonSecondary,
+                    borderColor: colors.border
+                  }
+                ]}
+                onPress={() => mudarIdioma("en")}
+              >
+                <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
+                  🇺🇸 EN
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Link para cadastro */}
+          <View style={styles.signupSection}>
+            <Text style={[styles.signupText, { color: colors.textSecondary }]}>
+              Não tem uma conta?{' '}
+            </Text>
+            <Link
+              href="ScreemRegister"
+              style={[styles.signupLink, { color: colors.primary }]}
+            >
+              {t("signup")}
+            </Link>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 30,
-    justifyContent: "center",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    marginBottom: 20,
   },
   themeButtonWrapper: {
-    position: "absolute",
-    top: 50, 
-    left: 20,
+    alignSelf: 'flex-start',
   },
   content: {
-    width: "100%",
-    alignItems: "center",
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 40,
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  logo: {
+    width: 80,
+    height: 60,
   },
   title: {
     fontSize: 32,
-    fontWeight: "bold",
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
     marginBottom: 40,
+    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    height: 56,
+  },
+  inputIcon: {
+    marginRight: 12,
+    fontSize: 16,
+    width: 20,
+    textAlign: 'center',
   },
   input: {
-    width: "100%",
-    height: 55,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
+    flex: 1,
     fontSize: 16,
   },
-  button: {
-    width: "100%",
-    height: 55,
+  passwordToggle: {
+    padding: 4,
+  },
+  loginButton: {
+    height: 56,
     borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 1,
+  buttonDisabled: {
+    opacity: 0.7,
   },
-  buttonLinkText: {
-    marginTop: 10,
-    fontSize: 14,
-    fontWeight: "400",
-    textAlign: "center",
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    padding: 8,
   },
   forgotPassword: {
-    marginTop: 15,
     fontSize: 14,
-    textAlign: "center",
+    fontWeight: '500',
+  },
+  languageSection: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  languageTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 12,
   },
   languageContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 20,
-    marginBottom: 10,
+    flexDirection: 'row',
+    gap: 12,
   },
   languageButton: {
-    backgroundColor: "#1E1E1E",
-    padding: 10,
-    marginHorizontal: 10,
-    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 80,
+    alignItems: 'center',
   },
   languageText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  signupSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  signupText: {
+    fontSize: 14,
+  },
+  signupLink: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

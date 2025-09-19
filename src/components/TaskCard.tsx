@@ -1,74 +1,256 @@
 import { doc, updateDoc, deleteDoc, database } from "../configurations/firebaseConfig";
-import { StyleSheet, View, Text, Pressable, Alert } from "react-native";
-import { useEffect, useState } from "react";
+import { StyleSheet, View, Text, Pressable, Alert, Animated } from "react-native";
+import { useEffect, useState, useRef } from "react";
+import { useTheme } from "../context/ContextTheme";
 
-export default function TaskCard(props: any) {
-  const [isChecked, setIsChecked] = useState(props.isChecked);
+interface TaskCardProps {
+  id: string;
+  title: string;
+  isChecked: boolean;
+  onUpdate?: (id: string, data: { isChecked: boolean }) => void;
+  onDelete?: (id: string) => void;
+}
+
+export default function TaskCard({ id, title, isChecked: initialChecked, onUpdate, onDelete }: TaskCardProps) {
+  const [isChecked, setIsChecked] = useState(initialChecked);
+  const [isLoading, setIsLoading] = useState(false);
+  const { colors } = useTheme();
+  
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const updateIsChecked = async () => {
-      const itemRef = doc(database, "tasks", props.id);
-      await updateDoc(itemRef, { isChecked });
-    };
-    updateIsChecked();
-  }, [isChecked]);
+    setIsChecked(initialChecked);
+  }, [initialChecked]);
 
-  const handleToggleCheck = () => {
-    setIsChecked((prev: boolean) => !prev);
+  const animateCheck = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.2,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleToggleCheck = async () => {
+    const newCheckedState = !isChecked;
+    setIsChecked(newCheckedState);
+    animateCheck();
+
+    if (onUpdate) {
+      onUpdate(id, { isChecked: newCheckedState });
+    }
+
+    try {
+      const itemRef = doc(database, "tasks", id);
+      await updateDoc(itemRef, { isChecked: newCheckedState });
+    } catch (error) {
+      console.log("Erro ao atualizar tarefa:", error);
+
+      setIsChecked(!newCheckedState);
+      if (onUpdate) {
+        onUpdate(id, { isChecked: !newCheckedState });
+      }
+      Alert.alert("Erro", "Não foi possível atualizar a tarefa.");
+    }
+  };
+
+  const animateDelete = () => {
+    Animated.timing(opacityAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handleDelete = () => {
-    Alert.alert("Exclusão", "Deseja realmente excluir a tarefa?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Sim",
-        style: "destructive",
-        onPress: async () => {
-          await deleteDoc(doc(database, "tasks", props.id));
-          Alert.alert("Exclusão efetuada", "Tarefa excluída com sucesso.");
+    Alert.alert(
+      "Excluir Tarefa",
+      `Tem certeza que deseja excluir "${title.length > 30 ? title.substring(0, 30) + '...' : title}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            animateDelete();
+
+
+            if (onDelete) {
+              setTimeout(() => onDelete(id), 300); 
+            }
+
+            try {
+              await deleteDoc(doc(database, "tasks", id));
+            } catch (error) {
+              console.log("Erro ao excluir tarefa:", error);
+              Alert.alert("Erro", "Não foi possível excluir a tarefa.");
+              
+              opacityAnim.setValue(1);
+            } finally {
+              setIsLoading(false);
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <Pressable onPress={handleToggleCheck} style={styles.icon}>
-        <Text style={{ fontSize: 22 }}>
-          {isChecked ? "✔️" : "⭕"}
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.border,
+          shadowColor: colors.shadow,
+          opacity: opacityAnim,
+        },
+      ]}
+    >
+
+      <Pressable
+        onPress={handleToggleCheck}
+        style={[
+          styles.checkboxContainer,
+          {
+            backgroundColor: isChecked ? colors.success : colors.input,
+            borderColor: isChecked ? colors.success : colors.inputBorder,
+          },
+        ]}
+        disabled={isLoading}
+      >
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          {isChecked ? (
+            <Text style={styles.checkIcon}>✓</Text>
+          ) : (
+            <View style={styles.emptyCheck} />
+          )}
+        </Animated.View>
+      </Pressable>
+
+
+      <View style={styles.taskContent}>
+        <Text
+          style={[
+            styles.title,
+            {
+              color: isChecked ? colors.textMuted : colors.text,
+              textDecorationLine: isChecked ? 'line-through' : 'none',
+            },
+          ]}
+          numberOfLines={2}
+        >
+          {title}
         </Text>
-      </Pressable>
+        
+        {isChecked && (
+          <Text style={[styles.completedLabel, { color: colors.success }]}>
+            Concluída
+          </Text>
+        )}
+      </View>
 
-      <Text style={styles.title}>
-        {props.title}
-      </Text>
 
-      <Pressable onPress={handleDelete} style={styles.icon}>
-        <Text style={{ fontSize: 20 }}>🗑️</Text>
+      <View
+        style={[
+          styles.priorityIndicator,
+          {
+            backgroundColor: isChecked
+              ? colors.success
+              : title.includes('!')
+              ? colors.error
+              : colors.primary,
+          },
+        ]}
+      />
+
+
+      <Pressable
+        onPress={handleDelete}
+        style={[
+          styles.deleteButton,
+          {
+            backgroundColor: colors.surfaceBackground,
+          },
+        ]}
+        disabled={isLoading}
+      >
+        <Text style={styles.deleteIcon}>🗑️</Text>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "lightgray",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 10,
-    width: "90%",
-    alignSelf: "center",
-    borderRadius: 10,
-    marginTop: 5
+    padding: 16,
+    marginVertical: 4,
+    marginHorizontal: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  checkboxContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  checkIcon: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  emptyCheck: {
+    width: 12,
+    height: 12,
+  },
+  taskContent: {
+    flex: 1,
+    paddingRight: 12,
   },
   title: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 17,
-    fontWeight: "500"
+    fontSize: 16,
+    fontWeight: "500",
+    lineHeight: 22,
+    marginBottom: 2,
   },
-  icon: {
-    paddingHorizontal: 5
-  }
+  completedLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  priorityIndicator: {
+    width: 4,
+    height: 40,
+    borderRadius: 2,
+    marginRight: 12,
+  },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteIcon: {
+    fontSize: 16,
+  },
 });
