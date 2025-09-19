@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {Alert,StyleSheet,Text,TextInput,TouchableOpacity,View,} from "react-native";
 import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import {signInWithEmailAndPassword,sendPasswordResetEmail,} from "firebase/auth";
 import { auth } from "../src/configurations/firebaseConfig";
 import { useTheme } from "../src/context/ContextTheme";
 import { useTranslation } from "react-i18next";
@@ -16,7 +16,6 @@ export default function Login() {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
 
-  // Verifica se usuário já está logado
   useEffect(() => {
     const verificarUsuarioLogado = async () => {
       try {
@@ -32,7 +31,6 @@ export default function Login() {
     verificarUsuarioLogado();
   }, []);
 
-  // Login
   const handleLoginUser = async () => {
     if (!email || !password) {
       Alert.alert(t("attention"), t("fillAllFields"));
@@ -40,7 +38,11 @@ export default function Login() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
       await AsyncStorage.setItem("@user", JSON.stringify(user));
       router.push("/Home");
@@ -80,13 +82,18 @@ export default function Login() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Image source={require("../assets/logo-planify.png")} style={styles.logo} resizeMode="contain" />
+      <View style={styles.themeButtonWrapper}>
+        <ThemeToggleButton />
+      </View>
 
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.text }]}>{t("login")}</Text>
 
         <TextInput
-          style={[styles.input, { backgroundColor: colors.input, color: colors.text }]}
+          style={[
+            styles.input,
+            { backgroundColor: colors.input, color: colors.text },
+          ]}
           placeholder={t("email")}
           placeholderTextColor={colors.placeHolderTextColor}
           value={email}
@@ -96,7 +103,10 @@ export default function Login() {
         />
 
         <TextInput
-          style={[styles.input, { backgroundColor: colors.input, color: colors.text }]}
+          style={[
+            styles.input,
+            { backgroundColor: colors.input, color: colors.text },
+          ]}
           placeholder={t("password")}
           placeholderTextColor={colors.placeHolderTextColor}
           value={password}
@@ -104,29 +114,45 @@ export default function Login() {
           secureTextEntry
         />
 
-        <TouchableOpacity style={[styles.button, { backgroundColor: colors.backgroundButton }]} onPress={handleLoginUser}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: colors.backgroundButton },
+          ]}
+          onPress={handleLoginUser}
+        >
           <Text style={styles.buttonText}>{t("login")}</Text>
         </TouchableOpacity>
 
         {/* Botões de Idioma */}
         <View style={styles.languageContainer}>
-          <TouchableOpacity style={styles.languageButton} onPress={() => mudarIdioma("pt")}>
+          <TouchableOpacity
+            style={styles.languageButton}
+            onPress={() => mudarIdioma("pt")}
+          >
             <Text style={styles.languageText}>PT</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.languageButton} onPress={() => mudarIdioma("en")}>
+          <TouchableOpacity
+            style={styles.languageButton}
+            onPress={() => mudarIdioma("en")}
+          >
             <Text style={styles.languageText}>EN</Text>
           </TouchableOpacity>
         </View>
 
-        <Link href="Cadastrar" style={[styles.buttonLinkText, { color: colors.text }]}>
-          {t("singup")}
+        <Link
+          href="ScreemRegister"
+          style={[styles.buttonLinkText, { color: colors.text }]}
+        >
+          {t("signup")}
         </Link>
 
-        <Text style={[styles.forgotPassword, { color: colors.text }]} onPress={forgotPassword}>
+        <Text
+          style={[styles.forgotPassword, { color: colors.text }]}
+          onPress={forgotPassword}
+        >
           {t("forgotPassword")}
         </Text>
-
-        <ThemeToggleButton />
       </View>
     </View>
   );
@@ -136,14 +162,13 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
     paddingHorizontal: 30,
+    justifyContent: "center",
   },
-  logo: {
-    width: 200,
-    height: 150,
-    marginBottom: 20,
+  themeButtonWrapper: {
+    position: "absolute",
+    top: 50, 
+    left: 20,
   },
   content: {
     width: "100%",

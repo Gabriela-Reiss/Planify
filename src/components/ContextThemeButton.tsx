@@ -1,29 +1,30 @@
-import React from "react";
-import { TouchableOpacity,Text,StyleSheet } from "react-native";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { useTheme } from "../context/ContextTheme";
 
+export default function ThemeToggleButton() {
+  const { toggleTheme, colors, theme } = useTheme();
 
-export default function ContextThemeButton(){
-    const {toggleTheme, colors} = useTheme()
-
-    return(
-        <TouchableOpacity 
-            style={[styles.button,{backgroundColor:colors.button}]}
-            onPress={toggleTheme}
-        >
-            <Text style={[styles.text,{color:colors.buttonText}]}>Alterar Tema</Text>
-        </TouchableOpacity>
-    )
+  return (
+    <TouchableOpacity
+      style={[styles.button, { borderColor: colors.text }]}
+      onPress={toggleTheme}
+    >
+      <Text style={[styles.icon, { color: colors.text }]}>
+        {theme === "light" ? "☾" : "☼"}
+      </Text>
+    </TouchableOpacity>
+  );
 }
+
 const styles = StyleSheet.create({
-    button:{
-        paddingVertical:12,
-        paddingHorizontal:24,
-        borderRadius:8,
-        marginTop:20
-    },
-    text:{
-        fontSize:16,
-        fontWeight:'bold'
-    }
-})
+  button: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+});

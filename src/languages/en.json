@@ -1,12 +1,14 @@
 {
-    "welcome": "Welcome to the app",
-    "logout": "Log out",
-    "deleteAccount": "Dele Account",
-    "confirmDelete": "Are you sure you want delete your account?",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "login": "Login",
-    "password": "Password",
-    "forgot password": "Forgot Password",
-    "register": "Registrer"
+  "login": "Login",
+  "email": "Email",
+  "password": "Password",
+  "signup": "Sign Up",
+  "forgotPassword": "Forgot Password?",
+  "attention": "Attention",
+  "fillAllFields": "Please fill all fields",
+  "invalidCredentials": "Invalid credentials",
+  "enterEmailToRecover": "Enter your email to recover your password",
+  "success": "Success",
+  "resetEmailSent": "Reset email sent",
+  "resetEmailError": "Failed to send reset email"
 }

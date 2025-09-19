@@ -21,7 +21,6 @@ export function ThemeProvider({children}){
         light:{
             background:'#FFF',
             text:'#000',
-            button:'#007bffff',
             buttonText:'#fff',
             input:'#f0f0f0',
             inputText:'#838080',
@@ -30,7 +29,6 @@ export function ThemeProvider({children}){
         dark:{
             background:'#121212',
             text:'#fff',
-            button:'#3fd92bff',
             buttonText:'#000',
             input:'#333',
             inputText:'#fff',

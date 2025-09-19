@@ -1,12 +1,14 @@
 {
-    "welcome": "Seja bem-vindo à aplicação",
-    "logout": "Sair da conta",
-    "deleteAccount": "Excluir conta",
-    "confirmDelete": "Tem certeza que deseja excluir a conta?",
-    "cancel": "Cancelar",
-    "delete": "Excluir",
-    "login": "Realizar Login",
-    "password": "Senha",
-    "forgot password": "Esqueceu a senha",
-    "register": "Cadastre-se"
+  "login": "Entrar",
+  "email": "E-mail",
+  "password": "Senha",
+  "signup": "Cadastrar",
+  "forgotPassword": "Esqueci minha senha",
+  "attention": "Atenção",
+  "fillAllFields": "Preencha todos os campos",
+  "invalidCredentials": "Credenciais inválidas",
+  "enterEmailToRecover": "Digite seu e-mail para recuperar a senha",
+  "success": "Sucesso",
+  "resetEmailSent": "E-mail de redefinição enviado",
+  "resetEmailError": "Erro ao enviar e-mail de redefinição"
 }
