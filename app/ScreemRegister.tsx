@@ -25,7 +25,7 @@ export default function ScreenRegister() {
       .then(async (userCredential) => {
         const user = userCredential.user;
         await AsyncStorage.setItem("@user", JSON.stringify(user));
-        router.push("/HomeScreen");
+        router.push("/Home");
       })
       .catch((error) => {
         console.log("Erro no cadastro:", error.message);
