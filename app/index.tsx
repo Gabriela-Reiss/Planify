@@ -1,89 +1,149 @@
-
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react";
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { auth } from '../src/configurations/firebaseConfig';
+import { useState, useEffect } from "react";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../src/configurations/firebaseConfig";
+import { useTheme } from "../src/context/ContextTheme";
+import { useTranslation } from "react-i18next";
+import ThemeToggleButton from "../src/components/ContextThemeButton";
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
 
-    const handleLoginUser = async () => {
-        if (!email || !password) {
-            Alert.alert('Por favor, preencha todos os campos');
-            return;
-        }
+  const { colors } = useTheme();
+  const { t, i18n } = useTranslation();
 
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            await AsyncStorage.setItem('@user', JSON.stringify(user));
-            router.push('/Home');
-        } catch (error: any) {
-            console.log("Mensagem de erro:", error.message);
-            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                Alert.alert("Erro", "Email ou senha inválidos");
-            } else {
-                Alert.alert("Erro", error.message);
-            }
+  // Verifica se usuário já está logado
+  useEffect(() => {
+    const verificarUsuarioLogado = async () => {
+      try {
+        const usuarioSalvo = await AsyncStorage.getItem("@user");
+        if (usuarioSalvo) {
+          router.push("/Home");
         }
+      } catch (error) {
+        console.log("Erro ao verificar login:", error);
+      }
+    };
+
+    verificarUsuarioLogado();
+  }, []);
+
+  // Login
+  const handleLoginUser = async () => {
+    if (!email || !password) {
+      Alert.alert(t("attention"), t("fillAllFields"));
+      return;
     }
 
-    return (
-  <View style={styles.container}>
-    <Image 
-      source={require('../assets/logo-planify.png')} 
-      style={styles.logo} 
-      resizeMode="contain"
-    />
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      await AsyncStorage.setItem("@user", JSON.stringify(user));
+      router.push("/Home");
+    } catch (error: any) {
+      console.log("Mensagem de erro:", error.message);
+      if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found"
+      ) {
+        Alert.alert("Erro", t("invalidCredentials"));
+      } else {
+        Alert.alert("Erro", error.message);
+      }
+    }
+  };
 
-    <View style={styles.content}>
-      <Text style={styles.title}>Login</Text>
+  // Recuperar senha
+  const forgotPassword = async () => {
+    if (!email) {
+      Alert.alert(t("attention"), t("enterEmailToRecover"));
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(t("success"), t("resetEmailSent"));
+    } catch (error: any) {
+      console.log("Erro ao enviar email:", error.message);
+      Alert.alert("Erro", t("resetEmailError"));
+    }
+  };
 
-      <TextInput
-        style={styles.input}
-        placeholder="Digite seu email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+  // Mudar idioma
+  const mudarIdioma = (lang: string) => {
+    i18n.changeLanguage(lang);
+  };
 
-      <TextInput
-        style={styles.input}
-        placeholder="Digite sua senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Image source={require("../assets/logo-planify.png")} style={styles.logo} resizeMode="contain" />
 
-      <TouchableOpacity style={styles.button} onPress={handleLoginUser}>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
+      <View style={styles.content}>
+        <Text style={[styles.title, { color: colors.text }]}>{t("login")}</Text>
 
-      <Link href="Cadastrar" style={styles.buttonLinkText}>
-        Ainda não possui uma conta? Cadastre-se já!
-      </Link>
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.input, color: colors.text }]}
+          placeholder={t("email")}
+          placeholderTextColor={colors.placeHolderTextColor}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.input, color: colors.text }]}
+          placeholder={t("password")}
+          placeholderTextColor={colors.placeHolderTextColor}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.backgroundButton }]} onPress={handleLoginUser}>
+          <Text style={styles.buttonText}>{t("login")}</Text>
+        </TouchableOpacity>
+
+        {/* Botões de Idioma */}
+        <View style={styles.languageContainer}>
+          <TouchableOpacity style={styles.languageButton} onPress={() => mudarIdioma("pt")}>
+            <Text style={styles.languageText}>PT</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.languageButton} onPress={() => mudarIdioma("en")}>
+            <Text style={styles.languageText}>EN</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Link href="Cadastrar" style={[styles.buttonLinkText, { color: colors.text }]}>
+          {t("singup")}
+        </Link>
+
+        <Text style={[styles.forgotPassword, { color: colors.text }]} onPress={forgotPassword}>
+          {t("forgotPassword")}
+        </Text>
+
+        <ThemeToggleButton />
+      </View>
     </View>
-  </View>
-)
+  );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f7fa",
     alignItems: "center",
-    justifyContent: "center", // centraliza TUDO verticalmente
+    justifyContent: "center",
     paddingHorizontal: 30,
   },
   logo: {
     width: 200,
     height: 150,
-    marginBottom: 20, // espaço entre logo e conteúdo
+    marginBottom: 20,
   },
   content: {
     width: "100%",
@@ -93,7 +153,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     marginBottom: 40,
-    color: "#da53b6",
   },
   input: {
     width: "100%",
@@ -101,16 +160,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: "#ffffff",
-    color: "#3b3d5c",
-    fontSize: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     borderWidth: 1,
     borderColor: "#e0e0e0",
+    fontSize: 16,
   },
   button: {
     width: "100%",
@@ -119,12 +171,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 15,
-    backgroundColor: "#da53b6",
-    shadowColor: "#6c63ff",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
   },
   buttonText: {
     color: "#ffffff",
@@ -135,8 +181,29 @@ const styles = StyleSheet.create({
   buttonLinkText: {
     marginTop: 10,
     fontSize: 14,
-    color: "#000",
     fontWeight: "400",
     textAlign: "center",
+  },
+  forgotPassword: {
+    marginTop: 15,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  languageContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  languageButton: {
+    backgroundColor: "#1E1E1E",
+    padding: 10,
+    marginHorizontal: 10,
+    borderRadius: 10,
+  },
+  languageText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
