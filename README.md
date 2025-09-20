@@ -56,7 +56,7 @@ Planify é um aplicativo de gerenciamento de tarefas desenvolvido em React Nativ
 ├── package.json             # Dependências e scripts
 ├── package-lock.json
 └── tsconfig.json            # Configurações TypeScript
-
+```
 
 ## 🛠️ Tecnologias e Bibliotecas
 
