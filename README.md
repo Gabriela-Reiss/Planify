@@ -17,6 +17,7 @@ Planify é um aplicativo de gerenciamento de tarefas desenvolvido em React Nativ
 
 ## 📂 Estrutura do Projeto
 
+```
  Planify/
 ├── app/
 │   ├── _layout.tsx          # Estrutura principal de layout 
@@ -91,8 +92,11 @@ Planify é um aplicativo de gerenciamento de tarefas desenvolvido em React Nativ
 
 
 ## 🎥 Demonstração
-## 📌 https://github.com/user-attachments/assets/cf8a9d68-097d-4289-a301-98de371c8106
+## 📌 https://github.com/user-attachments/assets/f924b900-f2c5-49bf-97b5-7d81554c38ce
 
+
+## Apk
+## https://expo.dev/artifacts/eas/tYbzqt29ehVFhCfT6L1rkS.aab
 
 
 ## 👨‍💻 Integrantes
