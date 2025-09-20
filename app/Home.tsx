@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import TaskCard from "../src/components/TaskCard";
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { deleteUser } from "firebase/auth";
 import { auth, collection, addDoc, database, getDocs } from "../src/configurations/firebaseConfig";
@@ -23,6 +24,7 @@ import ContextThemeButton from "../src/components/ContextThemeButton";
 import { useTheme } from "../src/context/ContextTheme";
 import * as Notifications from 'expo-notifications';
 import { useQuery } from '@tanstack/react-query';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -50,11 +52,18 @@ export default function HomeScreen() {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState(false);
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const { t, i18n } = useTranslation();
+
 
   interface Tarefa {
     id: string;
     title: string;
     isChecked: boolean;
+    dueDate?: string | null;
+    createdAt: string;
+    updatedAt: string;
   }
 
   const [listaItems, setListaItems] = useState<Tarefa[]>([]);
@@ -69,6 +78,11 @@ export default function HomeScreen() {
     await refetchQuote();
     setShowQuoteModal(true);
   };
+
+  const mudarIdioma = (lang: string) => {
+    i18n.changeLanguage(lang);
+  };
+
 
   
   useEffect(() => {
@@ -101,47 +115,27 @@ export default function HomeScreen() {
 
       
       await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "🔔 Tarefas Pendentes!",
-          body: `Você tem ${tarefasPendentes.length} tarefa(s) pendente(s)! Não esqueça de concluí-las.`,
-        },
-        trigger: { repeats: false } as Notifications.TimeIntervalTriggerInput,
-      });
+  content: {
+    title: t("pendingTasksTitle"),
+    body: t("pendingTasksBody", { count: tarefasPendentes.length }),
+  },
+  trigger: { repeats: false } as Notifications.TimeIntervalTriggerInput,
+});
     };
 
     agendarNotificacaoTarefasPendentes();
   }, [listaItems, hasPermission]);
 
-  const dispararNotificacao = async () => {
-    if (!hasPermission) {
-      Alert.alert(
-        "Permissão necessária",
-        "Ative as notificações nas configurações do app."
-      );
-      return;
-    }
-
-    try {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "🔔 Tarefas Pendentes!",
-          body: "Não se esqueça de terminar suas tarefas, sinta-se aliviado ao finalizá-las!",
-        },
-        trigger: { seconds: 2, repeats: false } as Notifications.TimeIntervalTriggerInput
-      });
-    } catch (error) {
-      console.log("Erro ao disparar notificação:", error);
-    }
-  };
+  
 
   const realizarLogoff = async () => {
     Alert.alert(
-      "Sair da Conta",
-      "Tem certeza que deseja sair?",
+      t("Log out of account"),
+      t("Are you sure you want to log out?"),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t("Cancel"), style: "cancel" },
         {
-          text: "Sair",
+          text: t("Go out"),
           onPress: async () => {
             await AsyncStorage.removeItem('@user');
             router.push('/');
@@ -153,12 +147,12 @@ export default function HomeScreen() {
 
   const excluirConta = () => {
     Alert.alert(
-      "Confirmar Exclusão",
-      "Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita!",
+      t("Confirm Deletion"),
+      t("Are you sure you want to delete your account? This action cannot be undone!"),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t("Cancel"), style: "cancel" },
         {
-          text: "Excluir",
+          text: t("Delete"),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -166,7 +160,7 @@ export default function HomeScreen() {
               if (user) {
                 await deleteUser(user);
                 await AsyncStorage.removeItem('@user');
-                Alert.alert("Conta Excluída", "Sua conta foi excluída com sucesso.");
+                Alert.alert(t("accountDeletedTitle"),t("accountDeletedBody"));
                 router.replace('/');
               } else {
                 Alert.alert("Erro", "Nenhum usuário logado.");
@@ -188,20 +182,29 @@ export default function HomeScreen() {
     }
 
     try {
+      const now = new Date().toISOString();
       const docRef = await addDoc(collection(database, 'tasks'), {
         title: title.trim(),
-        isChecked: false
+        isChecked: false,
+        dueDate: dueDate ? dueDate.toISOString() : null,
+        createdAt: now,
+        updatedAt: now,
       });
 
       const novaTarefa: Tarefa = {
         id: docRef.id,
         title: title.trim(),
-        isChecked: false
+        isChecked: false,
+        dueDate: dueDate ? dueDate.toISOString() : null,
+        createdAt: now,
+        updatedAt: now,
       };
 
       setListaItems(prev => [...prev, novaTarefa]);
       setTitle('');
+      setDueDate(null);
       setShowNewTaskModal(false);
+
 
     } catch (error: any) {
       console.log("Erro ao adicionar documento:", error.code, error.message);
@@ -217,7 +220,14 @@ export default function HomeScreen() {
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         if (data.title && typeof data.isChecked === 'boolean') {
-          items.push({ id: docSnap.id, title: data.title, isChecked: data.isChecked });
+          items.push({
+            id: docSnap.id,
+            title: data.title,
+            isChecked: data.isChecked,
+            dueDate: data.dueDate || null,
+            createdAt: data.createdAt || new Date().toISOString(),
+            updatedAt: data.updatedAt || new Date().toISOString(),
+          });
         } else {
           console.log("Documento inválido ignorado:", docSnap.id, data);
         }
@@ -230,6 +240,7 @@ export default function HomeScreen() {
       setIsLoading(false);
     }
   };
+
 
   const atualizarTarefa = (id: string, dadosAtualizados: Partial<Tarefa>) => {
     setListaItems(prev =>
@@ -260,9 +271,9 @@ export default function HomeScreen() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
+    if (hour < 12) return t("Good morning");
+    if (hour < 18) return t("Good afternoon");
+    return t("Good night");
   };
 
   const getTaskStats = () => {
@@ -295,7 +306,7 @@ export default function HomeScreen() {
                 style={[styles.quoteButton, { backgroundColor: colors.primary }]}
                 onPress={handleShowQuote}
               >
-                <Text style={styles.quoteButtonText}>💡 Ver frase do dia</Text>
+                <Text style={styles.quoteButtonText}>💡 {t("See quote of the day")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -318,11 +329,11 @@ export default function HomeScreen() {
             </View>
             <View style={[styles.statCard, { backgroundColor: colors.cardBackground }]}>
               <Text style={[styles.statNumber, { color: colors.success }]}>{stats.completed}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Concluídas</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t("Completed")}</Text>
             </View>
             <View style={[styles.statCard, { backgroundColor: colors.cardBackground }]}>
               <Text style={[styles.statNumber, { color: colors.warning }]}>{stats.pending}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pendentes</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t("Pending")}</Text>
             </View>
           </View>
         </View>
@@ -330,51 +341,33 @@ export default function HomeScreen() {
 
         <View style={styles.tasksSection}>
           <View style={styles.tasksSectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Suas Tarefas</Text>
-            {listaItems.length > 0 && (
-              <TouchableOpacity
-                style={[styles.notificationButton, { backgroundColor: colors.primary }]}
-              >
-                <Text style={styles.notificationButtonText}>🔔</Text>
-              </TouchableOpacity>
-            )}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t("Your tasks")}</Text>
           </View>
-
           <View style={styles.tasksList}>
             {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Carregando tarefas...</Text>
-              </View>
+              <ActivityIndicator size="large" color={colors.primary} />
             ) : listaItems.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateEmoji}>📝</Text>
-                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>Nenhuma tarefa ainda</Text>
-                <Text style={[styles.emptyStateDescription, { color: colors.textSecondary }]}>
-                  Crie sua primeira tarefa para começar a organizar seu dia
-                </Text>
-              </View>
+              <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 32 }}>{t("No tasks yet")}</Text>
             ) : (
               <FlatList
                 data={listaItems}
                 renderItem={({ item }) => (
                   <TaskCard
+                    id={item.id}
                     title={item.title}
                     isChecked={item.isChecked}
-                    id={item.id}
+                    dueDate={item.dueDate}
                     onUpdate={atualizarTarefa}
                     onDelete={removerTarefa}
                   />
                 )}
                 keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.flatListContent}
               />
             )}
           </View>
         </View>
 
-
+        {/* Botão + Nova Tarefa */}
         <TouchableOpacity
           style={[styles.addTaskButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowNewTaskModal(true)}
@@ -382,40 +375,53 @@ export default function HomeScreen() {
           <Text style={styles.addTaskButtonText}>+</Text>
         </TouchableOpacity>
 
-
-        <Modal
-          visible={showNewTaskModal}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setShowNewTaskModal(false)}
-        >
+        {/* Modal Nova Tarefa */}
+        <Modal visible={showNewTaskModal} animationType="slide" transparent={true} onRequestClose={() => setShowNewTaskModal(false)}>
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Nova Tarefa</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t("New task")}</Text>
               <TextInput
                 style={[styles.modalInput, { backgroundColor: colors.input, color: colors.text, borderColor: colors.inputBorder }]}
-                placeholder="Digite a descrição da tarefa"
+                placeholder={t("Enter the task description")}
                 placeholderTextColor={colors.placeHolderTextColor}
                 value={title}
                 onChangeText={setTitle}
                 multiline
                 autoFocus
               />
+
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                style={[styles.modalButton, { backgroundColor: colors.surfaceBackground, marginTop: 8 }]}
+              >
+                <Text style={{ color: colors.text }}>{t("Select Due Date:")} {dueDate ? dueDate.toLocaleDateString("pt-BR") : t("None")}</Text>
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dueDate || new Date()}
+                  mode="date"
+                  display="calendar"
+                  onChange={(_, date) => {
+                    setShowDatePicker(false);
+                    if (date) setDueDate(date);
+                  }}
+                />
+              )}
+
               <View style={styles.modalActions}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.surfaceBackground }]}
-                  onPress={() => { setTitle(''); setShowNewTaskModal(false); }}
+                  style={[styles.modalButton, { backgroundColor: colors.surfaceBackground }]}
+                  onPress={() => { setTitle(''); setDueDate(null); setShowNewTaskModal(false); }}
                 >
-                  <Text style={[styles.modalButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
+                  <Text style={{ color: colors.textSecondary }}>{t("Cancel")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton, { backgroundColor: colors.primary }]}
+                  style={[styles.modalButton, { backgroundColor: colors.primary }]}
                   onPress={salvarItem}
                   disabled={!title.trim() || isLoading}
                 >
-                  <Text style={[styles.modalButtonText, { color: colors.buttonText }]}>
-                    {isLoading ? "Salvando..." : "Salvar"}
-                  </Text>
+                  <Text style={{ color: colors.buttonText }}>{isLoading ? t("Saving...") : t("Save")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -440,7 +446,7 @@ export default function HomeScreen() {
                 onPress={() => { setShowMenuModal(false); router.push("/NewPassword"); }}
               >
                 <Text style={styles.menuItemIcon}>🔑</Text>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>Alterar Senha</Text>
+                <Text style={[styles.menuItemText, { color: colors.text }]}>{t("Change password")}</Text>
               </TouchableOpacity>
               <View style={[styles.menuDivider, { backgroundColor: colors.divider }]} />
               <TouchableOpacity
@@ -448,14 +454,14 @@ export default function HomeScreen() {
                 onPress={() => { setShowMenuModal(false); realizarLogoff(); }}
               >
                 <Text style={styles.menuItemIcon}>🚪</Text>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>Sair da Conta</Text>
+                <Text style={[styles.menuItemText, { color: colors.text }]}>{t("Log out of account")}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => { setShowMenuModal(false); excluirConta(); }}
               >
                 <Text style={styles.menuItemIcon}>🗑️</Text>
-                <Text style={[styles.menuItemText, { color: colors.error }]}>Excluir Conta</Text>
+                <Text style={[styles.menuItemText, { color: colors.error }]}>{t("Delete account")}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -470,7 +476,7 @@ export default function HomeScreen() {
         >
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Frase do Dia</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t("Quote of the day")}</Text>
               {isFetching ? (
                 <ActivityIndicator size="large" color={colors.primary} />
               ) : quoteData ? (
@@ -479,17 +485,45 @@ export default function HomeScreen() {
                   <Text style={[styles.quoteAuthor, { color: colors.textSecondary }]}>— {quoteData.a}</Text>
                 </>
               ) : (
-                <Text style={{ color: colors.text }}>Não foi possível carregar a frase.</Text>
+                <Text style={{ color: colors.text }}>{t("Unable to load sentence.")}</Text>
               )}
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: colors.primary, marginTop: 16 }]}
                 onPress={() => setShowQuoteModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.buttonText }]}>Fechar</Text>
+                <Text style={[styles.modalButtonText, { color: colors.buttonText }]}>{t("Close")}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
+
+        <View style={styles.languageSection}>
+                    <View style={styles.languageContainer}>
+                      <TouchableOpacity
+                        style={[styles.languageButton, { 
+                            backgroundColor: colors.buttonSecondary,
+                            borderColor: colors.border
+                          }]}
+                        onPress={() => mudarIdioma("pt")}
+                      >
+                        <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
+                          🇧🇷 PT
+                        </Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[styles.languageButton, { 
+                            backgroundColor: colors.buttonSecondary,
+                            borderColor: colors.border
+                          }]}
+                        onPress={() => mudarIdioma("en")}
+                      >
+                        <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
+                          🇺🇸 EN
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -512,6 +546,32 @@ const styles = StyleSheet.create({
   statNumber: { fontSize: 24, fontWeight: 'bold' },
   statLabel: { fontSize: 14 },
   tasksSection: { flex: 1, paddingHorizontal: 16 },
+  languageSection: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  languageTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  languageContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  languageButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  languageText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   tasksSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold' },
   notificationButton: { padding: 8, borderRadius: 8 },
