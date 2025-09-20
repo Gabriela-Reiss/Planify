@@ -24,6 +24,15 @@ import { useTheme } from "../src/context/ContextTheme";
 import * as Notifications from 'expo-notifications';
 import { useQuery } from '@tanstack/react-query';
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 // API DE FRASES MOTIVACIONAIS 
 const fetchMotivationalQuote = async (): Promise<{ q: string; a: string }> => {
   const response = await fetch("https://zenquotes.io/api/random");
@@ -40,6 +49,7 @@ export default function HomeScreen() {
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState(false);
 
   interface Tarefa {
     id: string;
@@ -48,7 +58,6 @@ export default function HomeScreen() {
   }
 
   const [listaItems, setListaItems] = useState<Tarefa[]>([]);
-
 
   const { data: quoteData, refetch: refetchQuote, isFetching } = useQuery({
     queryKey: ['motivational-quote'],
@@ -61,13 +70,62 @@ export default function HomeScreen() {
     setShowQuoteModal(true);
   };
 
+  
+  useEffect(() => {
+    const setupNotifications = async () => {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.HIGH,
+      });
+
+      const { status } = await Notifications.requestPermissionsAsync();
+      setHasPermission(status === "granted");
+    };
+
+    setupNotifications();
+
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log("Notificação recebida: ", notification);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+ 
+  useEffect(() => {
+    const agendarNotificacaoTarefasPendentes = async () => {
+      if (!hasPermission) return;
+
+      const tarefasPendentes = listaItems.filter(item => !item.isChecked);
+      if (tarefasPendentes.length === 0) return;
+
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "🔔 Tarefas Pendentes!",
+          body: `Você tem ${tarefasPendentes.length} tarefa(s) pendente(s)! Não esqueça de concluí-las.`,
+        },
+        trigger: { repeats: false } as Notifications.TimeIntervalTriggerInput,
+      });
+    };
+
+    agendarNotificacaoTarefasPendentes();
+  }, [listaItems, hasPermission]);
 
   const dispararNotificacao = async () => {
+    if (!hasPermission) {
+      Alert.alert(
+        "Permissão necessária",
+        "Ative as notificações nas configurações do app."
+      );
+      return;
+    }
+
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Lembrete de Tarefas",
-          body: "Você tem tarefas pendentes!",
+          title: "🔔 Tarefas Pendentes!",
+          body: "Não se esqueça de terminar suas tarefas, sinta-se aliviado ao finalizá-las!",
         },
         trigger: { seconds: 2, repeats: false } as Notifications.TimeIntervalTriggerInput
       });
@@ -75,13 +133,6 @@ export default function HomeScreen() {
       console.log("Erro ao disparar notificação:", error);
     }
   };
-
-  useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(notification => {
-      console.log("Notificação recebida: ", notification);
-    });
-    return () => subscription.remove();
-  }, []);
 
   const realizarLogoff = async () => {
     Alert.alert(
@@ -130,7 +181,6 @@ export default function HomeScreen() {
     );
   };
 
-
   const salvarItem = async () => {
     if (!title.trim()) {
       Alert.alert("Atenção", "Digite uma descrição para a tarefa!");
@@ -158,7 +208,6 @@ export default function HomeScreen() {
       Alert.alert("Erro ao salvar tarefa", error.message || "Erro desconhecido");
     }
   };
-
 
   const buscarItems = async () => {
     try {
@@ -284,7 +333,6 @@ export default function HomeScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Suas Tarefas</Text>
             {listaItems.length > 0 && (
               <TouchableOpacity
-                onPress={dispararNotificacao}
                 style={[styles.notificationButton, { backgroundColor: colors.primary }]}
               >
                 <Text style={styles.notificationButtonText}>🔔</Text>
