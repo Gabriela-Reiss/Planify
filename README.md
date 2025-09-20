@@ -1,27 +1,27 @@
-📌 Planify
+## 📌 Planify
 
 Planify é um aplicativo de gerenciamento de tarefas desenvolvido em React Native com integração ao Firebase e suporte a múltiplas funcionalidades modernas, como login persistente, temas dinâmicos, notificações locais e internacionalização.
 
 
-🚀 Funcionalidades
+## 🚀 Funcionalidades
 
-✅ Autenticação com Google e E-mail via Firebase
-✅ Login persistente (auto-login)
-✅ Armazenamento de tarefas no Firestore, por usuário
-✅ Lista de tarefas com sincronização em tempo real
-✅ Tema claro/escuro com persistência (AsyncStorage)
-✅ Internacionalização (i18n): suporte a PT/EN com troca dinâmica de idioma
-✅ Notificações locais com agendamento por data/hora
-✅ Integração com API externa via TanStack Query (ex.: frases motivacionais)
+- ✅ Autenticação com Google e E-mail via Firebase
+- ✅ Login persistente (auto-login)
+- ✅ Armazenamento de tarefas no Firestore, por usuário
+- ✅ Lista de tarefas com sincronização em tempo real
+- ✅ Tema claro/escuro com persistência (AsyncStorage)
+- ✅ Internacionalização (i18n): suporte a PT/EN com troca dinâmica de idioma
+- ✅ Notificações locais com agendamento por data/hora
+- ✅ Integração com API externa via TanStack Query (ex.: frases motivacionais)
 
 
-📂 Estrutura do Projeto
+## 📂 Estrutura do Projeto
 
-Planify/
+ Planify/
 ├── app/
-│   ├── _layout.tsx          # Estrutura principal de layout
-│   ├── Home.tsx             # Tela principal com lista de tarefas
-│   ├── index.tsx            # Tela inicial / login
+│   ├── _layout.tsx          # Estrutura principal de layout 
+│   ├── Home.tsx             # Tela principal com lista de tarefas 
+│   ├── index.tsx            # Tela inicial / login 
 │   ├── NewPassword.tsx      # Tela de redefinição de senha
 │   └── ScreemRegister.tsx   # Tela de registro de usuário
 │
@@ -57,42 +57,46 @@ Planify/
 └── tsconfig.json            # Configurações TypeScript
 
 
-🛠️ Tecnologias e Bibliotecas
+## 🛠️ Tecnologias e Bibliotecas
 
-React Native + Expo
-Firebase
-@react-native-firebase/app
-@react-native-firebase/auth
-@react-native-firebase/firestore
-Navegação: @react-navigation/native
-UI: react-native-paper ou native-base
-Internacionalização: i18n-js + arquivos en.json e pt.json
-Notificações: expo-notifications
-TanStack Query: @tanstack/react-query
-
-
-📱 Como Executar o Projeto
-
-Clone este repositório:
-git clone https://github.com/usuario/Planify.git
-
-Acesse a pasta do projeto:
-cd Planify
-
-Instale as dependências:
-npm install
-
-Inicie o app:
-npx expo start
+- React Native + Expo
+- Firebase:
+ - @react-native-firebase/app
+ - @react-native-firebase/auth
+ - @react-native-firebase/firestore
+- Navegação: @react-navigation/native
+- UI: react-native-paper ou native-base
+- Internacionalização: i18n-js + arquivos en.json e pt.json
+- Notificações: expo-notifications
+- TanStack Query: @tanstack/react-query
 
 
-🎥 Demonstração
-📌 https://github.com/user-attachments/assets/cf8a9d68-097d-4289-a301-98de371c8106
+## 📱 Como Executar o Projeto
+
+1. **Clone este repositório**
+   
+   ```git clone https://github.com/usuario/Planify.git```
+
+3. **Acesse a pasta do projeto**
+
+   ```cd Planify```
+
+5. **Instale as dependências**
+
+   ```npm install```
+
+6. **Inicie o app**
+
+   ```npx expo start```
+
+
+## 🎥 Demonstração
+## 📌 https://github.com/user-attachments/assets/cf8a9d68-097d-4289-a301-98de371c8106
 
 
 
-👨‍💻 Integrantes
+## 👨‍💻 Integrantes
 
-Gabriela de Sousa Reis - RM558830
-Laura Amadeu Soares - RM556690
-Raphael Lamaison Kim - RM557914
+- Gabriela de Sousa Reis - RM558830
+- Laura Amadeu Soares - RM556690
+- Raphael Lamaison Kim - RM557914
