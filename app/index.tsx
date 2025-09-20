@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   ScrollView 
 } from "react-native";
+import { GoogleAuth } from '../src/configurations/googleConfig';
 import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
@@ -19,7 +20,6 @@ import { auth } from "../src/configurations/firebaseConfig";
 import { useTheme } from "../src/context/ContextTheme";
 import { useTranslation } from "react-i18next";
 import ThemeToggleButton from "../src/components/ContextThemeButton";
-
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -31,7 +31,11 @@ export default function Login() {
   const { colors, theme } = useTheme();
   const { t, i18n } = useTranslation();
 
+  // Hook do Google Auth
+  const { request, response, promptAsync, handleResponse } = GoogleAuth.useGoogleLogin();
+
   useEffect(() => {
+    // Verifica se já existe usuário logado no AsyncStorage
     const verificarUsuarioLogado = async () => {
       try {
         const usuarioSalvo = await AsyncStorage.getItem("@user");
@@ -46,6 +50,12 @@ export default function Login() {
     verificarUsuarioLogado();
   }, []);
 
+  // Processa resposta do Google
+  useEffect(() => {
+    handleResponse();
+  }, [response]);
+
+  // Login email/senha
   const handleLoginUser = async () => {
     if (!email || !password) {
       Alert.alert(t("attention"), t("fillAllFields"));
@@ -55,11 +65,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       await AsyncStorage.setItem("@user", JSON.stringify(user));
       router.push("/Home");
@@ -79,6 +85,7 @@ export default function Login() {
     }
   };
 
+  // Esqueci a senha
   const forgotPassword = async () => {
     if (!email) {
       Alert.alert(t("attention"), t("enterEmailToRecover"));
@@ -111,16 +118,13 @@ export default function Login() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header com botão de tema */}
         <View style={styles.header}>
           <View style={styles.themeButtonWrapper}>
             <ThemeToggleButton />
           </View>
         </View>
 
-        {/* Conteúdo principal */}
         <View style={styles.content}>
-          {/* Logo */}
           <View style={[styles.logoContainer, { 
             shadowColor: colors.shadow,
             backgroundColor: colors.cardBackground 
@@ -132,31 +136,23 @@ export default function Login() {
             />
           </View>
 
-          {/* Título */}
           <Text style={[styles.title, { color: colors.text }]}>
             {t("login")}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Bem-vindo de volta ao Planify
+            {t("Welcome back to Planify")}
           </Text>
 
-          {/* Formulário */}
           <View style={styles.form}>
-            {/* Campo Email */}
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
                 {t("email")}
               </Text>
-              <View style={[
-                styles.inputWrapper,
-                { 
+              <View style={[styles.inputWrapper, { 
                   backgroundColor: colors.input,
                   borderColor: colors.inputBorder
-                }
-              ]}>
-                <Text style={[styles.inputIcon, { color: colors.textMuted }]}>
-                  ✉
-                </Text>
+                }]}>
+                <Text style={[styles.inputIcon, { color: colors.textMuted }]}>✉</Text>
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder={t("email")}
@@ -170,21 +166,15 @@ export default function Login() {
               </View>
             </View>
 
-            {/* Campo Senha */}
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
                 {t("password")}
               </Text>
-              <View style={[
-                styles.inputWrapper,
-                { 
+              <View style={[styles.inputWrapper, { 
                   backgroundColor: colors.input,
                   borderColor: colors.inputBorder
-                }
-              ]}>
-                <Text style={[styles.inputIcon, { color: colors.textMuted }]}>
-                  🔒
-                </Text>
+                }]}>
+                <Text style={[styles.inputIcon, { color: colors.textMuted }]}>🔒</Text>
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder={t("password")}
@@ -205,16 +195,11 @@ export default function Login() {
               </View>
             </View>
 
-            {/* Botão de Login */}
             <TouchableOpacity
-              style={[
-                styles.loginButton,
-                { 
+              style={[styles.loginButton, { 
                   backgroundColor: colors.backgroundButton,
                   shadowColor: colors.shadow 
-                },
-                isLoading && styles.buttonDisabled
-              ]}
+                }, isLoading && styles.buttonDisabled]}
               onPress={handleLoginUser}
               disabled={isLoading}
             >
@@ -223,7 +208,36 @@ export default function Login() {
               </Text>
             </TouchableOpacity>
 
-            {/* Esqueci a senha */}
+           
+<TouchableOpacity
+  style={[
+    styles.googleButton,
+    { 
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.buttonSecondary,
+      borderColor: colors.border,
+      borderWidth: 1,
+      marginTop: 16,
+      paddingVertical: 12,
+      borderRadius: 8,
+    }
+  ]}
+  onPress={() => promptAsync()}
+  disabled={!request}
+>
+  <Image
+    source={require('../assets/google-logo.png')}
+    style={{ width: 24, height: 24, marginRight: 8 }}
+    resizeMode="contain"
+  />
+  <Text style={{ color: colors.buttonSecondaryText, fontWeight: '500', fontSize: 14 }}>
+    {t("Sign in with Google")}
+  </Text>
+</TouchableOpacity>
+
+
             <TouchableOpacity
               style={styles.forgotPasswordContainer}
               onPress={forgotPassword}
@@ -234,20 +248,13 @@ export default function Login() {
             </TouchableOpacity>
           </View>
 
-          {/* Seletor de idioma */}
           <View style={styles.languageSection}>
-            <Text style={[styles.languageTitle, { color: colors.textSecondary }]}>
-              Idioma
-            </Text>
             <View style={styles.languageContainer}>
               <TouchableOpacity
-                style={[
-                  styles.languageButton,
-                  { 
+                style={[styles.languageButton, { 
                     backgroundColor: colors.buttonSecondary,
                     borderColor: colors.border
-                  }
-                ]}
+                  }]}
                 onPress={() => mudarIdioma("pt")}
               >
                 <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
@@ -256,13 +263,10 @@ export default function Login() {
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[
-                  styles.languageButton,
-                  { 
+                style={[styles.languageButton, { 
                     backgroundColor: colors.buttonSecondary,
                     borderColor: colors.border
-                  }
-                ]}
+                  }]}
                 onPress={() => mudarIdioma("en")}
               >
                 <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
@@ -272,10 +276,9 @@ export default function Login() {
             </View>
           </View>
 
-          {/* Link para cadastro */}
           <View style={styles.signupSection}>
             <Text style={[styles.signupText, { color: colors.textSecondary }]}>
-              Não tem uma conta?{' '}
+              {t("Don't have an account?")}{' '}
             </Text>
             <Link
               href="ScreemRegister"
@@ -438,4 +441,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  googleButton: {
+    height: 56,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  }
 });

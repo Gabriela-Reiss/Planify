@@ -12,6 +12,7 @@ const firebaseConfig = {
   messagingSenderId: "84569492548",
   appId: "1:84569492548:web:6974a2d9012dab67690011"
 };
+
 const {getReactNativePersistence} = require("firebase/auth") as any;
 
 const app = initializeApp(firebaseConfig);

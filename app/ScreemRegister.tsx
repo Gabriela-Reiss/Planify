@@ -18,6 +18,7 @@ import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../src/context/ContextTheme";
 import ThemeToggleButton from "../src/components/ContextThemeButton";
+import { useTranslation } from "react-i18next";
 
 export default function ScreenRegister() {
   const [nome, setNome] = useState("");
@@ -28,6 +29,7 @@ export default function ScreenRegister() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { colors, theme } = useTheme();
 
@@ -38,6 +40,10 @@ export default function ScreenRegister() {
 
   const validatePassword = (password: string) => {
     return password.length >= 6;
+  };
+
+  const mudarIdioma = (lang: string) => {
+    i18n.changeLanguage(lang);
   };
 
   const handleCadastro = async () => {
@@ -136,10 +142,10 @@ export default function ScreenRegister() {
 
           {/* Título */}
           <Text style={[styles.title, { color: colors.text }]}>
-            Criar Conta
+            {t("Create account")}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Preencha os dados para começar sua jornada no Planify 🚀
+            {t("Fill in the details to start your journey with Planify")} 🚀
           </Text>
 
           {/* Formulário */}
@@ -147,7 +153,7 @@ export default function ScreenRegister() {
             {/* Campo Nome */}
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Nome Completo
+                {t("Full name")}
               </Text>
               <View style={[
                 styles.inputWrapper,
@@ -161,7 +167,7 @@ export default function ScreenRegister() {
                 </Text>
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
-                  placeholder="Digite seu nome completo"
+                  placeholder={t("Enter your full name")}
                   placeholderTextColor={colors.placeHolderTextColor}
                   value={nome}
                   onChangeText={setNome}
@@ -174,7 +180,7 @@ export default function ScreenRegister() {
             {/* Campo Email */}
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                E-mail
+                {t("email")}
               </Text>
               <View style={[
                 styles.inputWrapper,
@@ -188,7 +194,7 @@ export default function ScreenRegister() {
                 </Text>
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
-                  placeholder="Digite seu e-mail"
+                  placeholder={t("Enter your email")}
                   placeholderTextColor={colors.placeHolderTextColor}
                   value={email}
                   onChangeText={setEmail}
@@ -202,7 +208,7 @@ export default function ScreenRegister() {
             {/* Campo Senha */}
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Senha
+                {t("password")}
               </Text>
               <View style={[
                 styles.inputWrapper,
@@ -216,7 +222,7 @@ export default function ScreenRegister() {
                 </Text>
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
-                  placeholder="Digite sua senha"
+                  placeholder={t("Enter your password")}
                   placeholderTextColor={colors.placeHolderTextColor}
                   value={senha}
                   onChangeText={setSenha}
@@ -233,14 +239,14 @@ export default function ScreenRegister() {
                 </TouchableOpacity>
               </View>
               <Text style={[styles.passwordHint, { color: colors.textMuted }]}>
-                Mínimo de 6 caracteres
+                {t("Minimum of 6 characters")}
               </Text>
             </View>
 
             {/* Campo Confirmar Senha */}
             <View style={styles.inputContainer}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Confirmar Senha
+                {t("Confirm password")}
               </Text>
               <View style={[
                 styles.inputWrapper,
@@ -254,7 +260,7 @@ export default function ScreenRegister() {
                 </Text>
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
-                  placeholder="Confirme sua senha"
+                  placeholder={t("Confirm your password")}
                   placeholderTextColor={colors.placeHolderTextColor}
                   value={confirmSenha}
                   onChangeText={setConfirmSenha}
@@ -286,21 +292,48 @@ export default function ScreenRegister() {
               disabled={isLoading}
             >
               <Text style={[styles.registerButtonText, { color: colors.buttonText }]}>
-                {isLoading ? "Criando conta..." : "Criar Conta"}
+                {isLoading ? 
+                t("Creating account...") : t("Create account")}
               </Text>
             </TouchableOpacity>
           </View>
 
+          <View style={styles.languageContainer}>
+                        <TouchableOpacity
+                          style={[styles.languageButton, { 
+                              backgroundColor: colors.buttonSecondary,
+                              borderColor: colors.border
+                            }]}
+                          onPress={() => mudarIdioma("pt")}
+                        >
+                          <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
+                            🇧🇷 PT
+                          </Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                          style={[styles.languageButton, { 
+                              backgroundColor: colors.buttonSecondary,
+                              borderColor: colors.border
+                            }]}
+                          onPress={() => mudarIdioma("en")}
+                        >
+                          <Text style={[styles.languageText, { color: colors.buttonSecondaryText }]}>
+                            🇺🇸 EN
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
           {/* Link para login */}
           <View style={styles.loginSection}>
             <Text style={[styles.loginText, { color: colors.textSecondary }]}>
-              Já tem uma conta?{' '}
+              {t("Already have an account?")}{' '}
             </Text>
             <Link
               href="/"
               style={[styles.loginLink, { color: colors.primary }]}
             >
-              Fazer Login
+              {t("Log in")}
             </Link>
           </View>
         </View>
@@ -330,6 +363,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  languageContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20
+  },
+  languageButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  languageText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   logoContainer: {
     width: 100,
     height: 100,
@@ -340,7 +390,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 8
   },
   logo: {
     width: 70,
@@ -407,6 +457,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 6,
+    marginBottom: 50
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -420,6 +471,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 24,
+    marginBottom: 25
   },
   loginText: {
     fontSize: 14,

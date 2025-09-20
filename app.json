@@ -13,9 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.gabrielasousa.mobilecp4",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.gabrielasousa.mobilecp4",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,6 +26,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d3367731-d855-49e7-8d4a-9436e73e0e98"
+      }
     }
   }
 }

@@ -10,5 +10,20 @@
   "enterEmailToRecover": "Enter your email to recover your password",
   "success": "Success",
   "resetEmailSent": "Reset email sent",
-  "resetEmailError": "Failed to send reset email"
+  "resetEmailError": "Failed to send reset email",
+  "Sign in with Google": "Sign in with Google",
+  "Welcome back to Planify": "Welcome back to Planify",
+  "Create account": "Create account",
+  "Creating account...": "Creating account...",
+  "Preencha os dados para começar sua jornada no Planify": "Preencha os dados para começar sua jornada no Planify",
+  "Full name": "Full name",
+  "Confirm password": "Confirm password",
+  "Minimum of 6 characters": "Minimum of 6 characters",
+  "Already have an account?":"Already have an account?",
+  "Log in": "Log in",
+  "Enter your full name":"Enter your full name",
+  "Enter your email":"Enter your email",
+  "Enter your password":"Enter your password",
+  "Confirm your password": "Confirm your password",
+  "Don't have an account?":"Don't have an account?"
 }

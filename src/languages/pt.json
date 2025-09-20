@@ -10,5 +10,20 @@
   "enterEmailToRecover": "Digite seu e-mail para recuperar a senha",
   "success": "Sucesso",
   "resetEmailSent": "E-mail de redefinição enviado",
-  "resetEmailError": "Erro ao enviar e-mail de redefinição"
+  "resetEmailError": "Erro ao enviar e-mail de redefinição",
+  "Sign in with Google": "Entre com conta Google",
+  "Welcome back to Planify": "Bem-vindo de volta ao Planify",
+  "Create account": "Criar Conta",
+  "Fill in the details to start your journey with Planify": "Preencha os dados para começar sua jornada no Planify",
+  "Full name": "Nome Completo",
+  "Confirm password": "Confirmar Senha",
+  "Minimum of 6 characters": "Mínimo de 6 caracteres",
+  "Already have an account?": "Já tem uma conta?",
+  "Log in": "Faça Login",
+  "Enter your full name":"Digite seu nome completo",
+  "Enter your email":"Digite seu e-mail",
+  "Enter your password":"Digite sua senha",
+  "Confirm your password":"Confirme sua senha",
+  "Creating account...":"Criando conta...",
+  "Don't have an account?":"Não tem uma conta?"
 }
