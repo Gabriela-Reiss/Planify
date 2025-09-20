@@ -95,8 +95,15 @@ Planify é um aplicativo de gerenciamento de tarefas desenvolvido em React Nativ
 ## 📌 https://github.com/user-attachments/assets/f924b900-f2c5-49bf-97b5-7d81554c38ce
 
 
-## Apk
+## APK
 ## https://expo.dev/artifacts/eas/tYbzqt29ehVFhCfT6L1rkS.aab
+
+
+## 👥 Grupo Desenvolvedor
+- Gabriela de Sousa Reis - RM558830
+- Laura Amadeu Soares - RM556690
+- Raphael Lamaison Kim - RM557914
+
 
 
 ## 👨‍💻 Integrantes
