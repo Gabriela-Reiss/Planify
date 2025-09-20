@@ -176,70 +176,87 @@ export default function HomeScreen() {
   };
 
   const salvarItem = async () => {
-    if (!title.trim()) {
-      Alert.alert("Atenção", "Digite uma descrição para a tarefa!");
+  if (!title.trim()) {
+    Alert.alert("Atenção", "Digite uma descrição para a tarefa!");
+    return;
+  }
+
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Erro", "Usuário não autenticado");
       return;
     }
 
-    try {
-      const now = new Date().toISOString();
-      const docRef = await addDoc(collection(database, 'tasks'), {
-        title: title.trim(),
-        isChecked: false,
-        dueDate: dueDate ? dueDate.toISOString() : null,
-        createdAt: now,
-        updatedAt: now,
-      });
+    const now = new Date().toISOString();
+    const docRef = await addDoc(collection(database, 'tasks'), {
+      title: title.trim(),
+      isChecked: false,
+      dueDate: dueDate ? dueDate.toISOString() : null,
+      createdAt: now,
+      updatedAt: now,
+      uid: user.uid,  // <-- adiciona UID aqui
+    });
 
-      const novaTarefa: Tarefa = {
-        id: docRef.id,
-        title: title.trim(),
-        isChecked: false,
-        dueDate: dueDate ? dueDate.toISOString() : null,
-        createdAt: now,
-        updatedAt: now,
-      };
+    const novaTarefa: Tarefa = {
+      id: docRef.id,
+      title: title.trim(),
+      isChecked: false,
+      dueDate: dueDate ? dueDate.toISOString() : null,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-      setListaItems(prev => [...prev, novaTarefa]);
-      setTitle('');
-      setDueDate(null);
-      setShowNewTaskModal(false);
+    setListaItems(prev => [...prev, novaTarefa]);
+    setTitle('');
+    setDueDate(null);
+    setShowNewTaskModal(false);
 
+  } catch (error: any) {
+    console.log("Erro ao adicionar documento:", error.code, error.message);
+    Alert.alert("Erro ao salvar tarefa", error.message || "Erro desconhecido");
+  }
+};
 
-    } catch (error: any) {
-      console.log("Erro ao adicionar documento:", error.code, error.message);
-      Alert.alert("Erro ao salvar tarefa", error.message || "Erro desconhecido");
-    }
-  };
 
   const buscarItems = async () => {
-    try {
-      setIsLoading(true);
-      const querySnapshot = await getDocs(collection(database, 'tasks'));
-      const items: Tarefa[] = [];
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.title && typeof data.isChecked === 'boolean') {
-          items.push({
-            id: docSnap.id,
-            title: data.title,
-            isChecked: data.isChecked,
-            dueDate: data.dueDate || null,
-            createdAt: data.createdAt || new Date().toISOString(),
-            updatedAt: data.updatedAt || new Date().toISOString(),
-          });
-        } else {
-          console.log("Documento inválido ignorado:", docSnap.id, data);
-        }
-      });
-      setListaItems(items);
-    } catch (error: any) {
-      console.log("Erro ao buscar tarefas:", error.code, error.message);
-      Alert.alert("Erro", "Não foi possível carregar as tarefas");
-    } finally {
+  try {
+    setIsLoading(true);
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Erro", "Usuário não autenticado");
       setIsLoading(false);
+      return;
     }
-  };
+
+    const querySnapshot = await getDocs(
+      collection(database, 'tasks')
+    );
+
+    const items: Tarefa[] = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.title && typeof data.isChecked === 'boolean' && data.uid === user.uid) {
+        items.push({
+          id: docSnap.id,
+          title: data.title,
+          isChecked: data.isChecked,
+          dueDate: data.dueDate || null,
+          createdAt: data.createdAt || new Date().toISOString(),
+          updatedAt: data.updatedAt || new Date().toISOString(),
+        });
+      }
+    });
+
+    setListaItems(items);
+  } catch (error: any) {
+    console.log("Erro ao buscar tarefas:", error.code, error.message);
+    Alert.alert("Erro", "Não foi possível carregar as tarefas");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
 
   const atualizarTarefa = (id: string, dadosAtualizados: Partial<Tarefa>) => {
